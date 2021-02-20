@@ -4,6 +4,7 @@ import tkinter as tk
 import requests
 import csv
 import sys
+import os.path
 
 #My key for the API
 key = "10f867ce2c11e35ea4c43d1791b62f456ed2309c"
@@ -99,16 +100,20 @@ def getPopulation(stateFips, year, stateName):
     url = str(baseUrl + year + dataset + searchAndError + "&for=" + "state:" + stateFips + "&key=" + key)
     response = requests.get(url)
     data = response.json()
-    with open('output.csv', mode='w', newline='', encoding='utf-8') as outputFile:
+    dirpath = os.path.dirname(os.path.realpath(__file__))
+    output_filepath = os.path.join(dirpath, "output.csv")
+    with open(output_filepath, mode='w', newline='', encoding='utf-8') as outputFile:
         outputWriter = csv.writer(outputFile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         outputWriter.writerow(['input_year', 'input_state', 'output_population_size'])
         outputWriter.writerow([year, stateName, data[1][1]])
     return data[1][1]
 
+
 #Shows the results in the GUI
 def showResults(state, year, pop):
     tk.Label(window, text="Search Results:").grid(columnspan=2, row=4, column=0)
     tk.Label(window, text=state + "," + year + "," + pop).grid(columnspan=2, row=5, column=0)
+
 
 #Defines the searchButton's behavior when clicked
 def searchButtonBehavior():
@@ -116,6 +121,7 @@ def searchButtonBehavior():
     yearKey = searchYear.get()
     stateName = statesFullNames.get(searchAbv.get())
     showResults(stateName, yearKey, getPopulation(stateKey, yearKey, stateName))
+
 
 #reads through the CSV input file and gets the year and state and then
 #changes them to be used in getPopulation()
@@ -164,6 +170,3 @@ if __name__ == '__main__':
         searchButton.grid(columnspan=2, row=2, column=0)
 
         window.mainloop()
-
-
-
