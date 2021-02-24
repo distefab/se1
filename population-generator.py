@@ -5,6 +5,7 @@ import requests
 import csv
 import sys
 import os.path
+import subprocess
 
 #My key for the API
 key = "10f867ce2c11e35ea4c43d1791b62f456ed2309c"
@@ -90,6 +91,8 @@ stateFips = {
     'SC': '45', 'KY': '21', 'OR': '41', 'SD': '46'
 }
 
+streetStates = ["ak", "hi", "nv", "wy"]
+
 #Uses the Census API to find the population for the given year and state
 #Also is sent the Full Name of the state, it then writes all the information to a
 #csv file
@@ -108,11 +111,41 @@ def getPopulation(stateFips, year, stateName):
         outputWriter.writerow([year, stateName, data[1][1]])
     return data[1][1]
 
+def writeCSV(state, num):
+    dirpath = os.path.dirname(os.path.realpath(__file__))
+    output_filepath = os.path.join(dirpath, "personInput.csv")
+    with open(output_filepath, mode='w', newline='', encoding='utf-8') as outputFile:
+        outputWriter = csv.writer(outputFile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        outputWriter.writerow(['State', 'Gen Number'])
+        outputWriter.writerow([state, num])
+
+def readPersonCSV():
+    with open('output.csv') as csvfile:
+        readCSV = csv.reader(csvfile, delimiter=',')
+        rowcounter = 0
+        for row in readCSV:
+            if rowcounter == 0:
+                rowcounter += 1
+            if rowcounter == 2:
+                inputAddress = row[3]
+            rowcounter += 1
+    print(inputAddress)
+    return inputAddress
+
+
+def sendPersonGen():
+    subprocess.call(["python", "person-generator.py", "personInput.csv"])
+
 
 #Shows the results in the GUI
 def showResults(state, year, pop):
     tk.Label(window, text="Search Results:").grid(columnspan=2, row=4, column=0)
     tk.Label(window, text=state + "," + year + "," + pop).grid(columnspan=2, row=5, column=0)
+
+def showStreet(state, address):
+    tk.Label(window, text="Example Street: " + state).grid(columnspan=2, row=8, column=0)
+    streetLabel = tk.Label(window, text=address)
+    streetLabel.grid(row=9, column=0)
 
 
 #Defines the searchButton's behavior when clicked
@@ -121,6 +154,15 @@ def searchButtonBehavior():
     yearKey = searchYear.get()
     stateName = statesFullNames.get(searchAbv.get())
     showResults(stateName, yearKey, getPopulation(stateKey, yearKey, stateName))
+
+def streetButtonBehavior():
+    streetState = searchStreet.get()
+    streetNum = 1
+    writeCSV(streetState, streetNum)
+    sendPersonGen()
+    address = readPersonCSV()
+    showStreet(streetState, address)
+
 
 
 #reads through the CSV input file and gets the year and state and then
@@ -158,6 +200,9 @@ if __name__ == '__main__':
         searchYear = tk.StringVar(window)
         searchYear.set(years[0])
 
+        searchStreet = tk.StringVar(window)
+        searchStreet.set(streetStates[0])
+
         tk.Label(window, text="Choose State:").grid(row=0, column=0)
         w = tk.OptionMenu(window, searchAbv, *states)
         w.grid(row=0, column=1)
@@ -168,5 +213,12 @@ if __name__ == '__main__':
 
         searchButton = tk.Button(window, text="Search", command=searchButtonBehavior)
         searchButton.grid(columnspan=2, row=2, column=0)
+
+        tk.Label(window, text="Choose State to Get Random Address From").grid(row=6, column=0)
+        z = tk.OptionMenu(window, searchStreet, *streetStates)
+        z.grid(row=7, column=0)
+
+        streetSearchButton = tk.Button(window, text="Search", command=streetButtonBehavior)
+        streetSearchButton.grid(columnspan=2, row=7, column=1)
 
         window.mainloop()
