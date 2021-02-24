@@ -1,5 +1,5 @@
 #Bryan DiStefano
-#Population generator for US States using Census data API
+#Population generator for US States using Census data API also communicates with a person generator to get a random street address
 import tkinter as tk
 import requests
 import csv
@@ -90,7 +90,7 @@ stateFips = {
     'MN': '27', 'MI': '26', 'RI': '44', 'KS': '20', 'MT': '30', 'MS': '28',
     'SC': '45', 'KY': '21', 'OR': '41', 'SD': '46'
 }
-
+#list of available states to get adresses from
 streetStates = ["ak", "hi", "nv", "wy"]
 
 #Uses the Census API to find the population for the given year and state
@@ -111,6 +111,7 @@ def getPopulation(stateFips, year, stateName):
         outputWriter.writerow([year, stateName, data[1][1]])
     return data[1][1]
 
+#write a csv file to input into the person generator program
 def writeCSV(state, num):
     dirpath = os.path.dirname(os.path.realpath(__file__))
     output_filepath = os.path.join(dirpath, "personInput.csv")
@@ -118,7 +119,7 @@ def writeCSV(state, num):
         outputWriter = csv.writer(outputFile, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         outputWriter.writerow(['State', 'Gen Number'])
         outputWriter.writerow([state, num])
-
+#reads the person generator output CSV
 def readPersonCSV():
     with open('output.csv') as csvfile:
         readCSV = csv.reader(csvfile, delimiter=',')
@@ -132,7 +133,7 @@ def readPersonCSV():
     print(inputAddress)
     return inputAddress
 
-
+#csends the csv file to person generator
 def sendPersonGen():
     subprocess.call(["python", "person-generator.py", "personInput.csv"])
 
@@ -141,7 +142,7 @@ def sendPersonGen():
 def showResults(state, year, pop):
     tk.Label(window, text="Search Results:").grid(columnspan=2, row=4, column=0)
     tk.Label(window, text=state + "," + year + "," + pop).grid(columnspan=2, row=5, column=0)
-
+#shows the random street result from person generator in the gui
 def showStreet(state, address):
     tk.Label(window, text="Example Street: " + state).grid(columnspan=2, row=8, column=0)
     streetLabel = tk.Label(window, text=address)
@@ -155,6 +156,7 @@ def searchButtonBehavior():
     stateName = statesFullNames.get(searchAbv.get())
     showResults(stateName, yearKey, getPopulation(stateKey, yearKey, stateName))
 
+#defines the behavior of the street search button
 def streetButtonBehavior():
     streetState = searchStreet.get()
     streetNum = 1
